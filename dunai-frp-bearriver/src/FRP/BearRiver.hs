@@ -494,6 +494,25 @@ dpSwitchB sfs sfF sfCs = MSF $ \a -> do
           NoEvent -> return (dpSwitchB sfs' sfF' sfCs)
   return (bs, ct)
 
+-- ** Parallel composition and switching over collections with routing
+
+dpSwitch :: (Monad m, Traversable col)
+         => (forall sf. (a -> col sf -> col (b, sf)))
+         -> col (SF m b c)
+         -> SF m (a, col c) (Event d)
+         -> (col (SF m b c) -> d -> SF m a (col c))
+         -> SF m a (col c)
+dpSwitch rf sfs sfF sfCs = MSF $ \a -> do
+  let bsfs = rf a sfs
+  res <- T.mapM (\(b, sf) -> unMSF sf b) bsfs
+  let cs   = fmap fst res
+      sfs' = fmap snd res
+  (e,sfF') <- unMSF sfF (a, cs)
+  let ct = case e of
+          Event d -> sfCs sfs' d
+          NoEvent -> dpSwitch rf sfs' sfF' sfCs
+  return (cs, ct)
+
 -- ** Parallel composition over collections
 
 parC :: Monad m => SF m a b -> SF m [a] [b]
