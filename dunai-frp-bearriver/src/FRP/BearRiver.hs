@@ -496,6 +496,17 @@ dpSwitchB sfs sfF sfCs = MSF $ \a -> do
 
 -- ** Parallel composition and switching over collections with routing
 
+-- | Parallel switch with delayed observation parameterized on the routing
+-- function.
+--
+-- The collection argument to the function invoked on the
+-- switching event is of particular interest: it captures the
+-- continuations of the signal functions running in the collection
+-- maintained by 'dpSwitch' at the time of the switching event,
+-- thus making it possible to preserve their state across a switch.
+-- Since the continuations are plain, ordinary signal functions,
+-- they can be resumed, discarded, stored, or combined with
+-- other signal functions.
 dpSwitch :: (Monad m, Traversable col)
          => (forall sf. (a -> col sf -> col (b, sf)))
          -> col (SF m b c)
